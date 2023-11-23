@@ -1,0 +1,59 @@
+
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+#root {
+	height: 100%;
+}
+
+[data-amplify-theme] {
+	min-height: 100%;
+	background-image: url("assets/Logos/bg.png");
+	background-position-y: bottom;
+	background-attachment: fixed;
+	background-repeat: repeat-x;
+	background-size: auto 300px;
+}
+
+[data-amplify-container] {
+	background-color: transparent;
+}
+
+/*Custom classing for ChangePassword as button does not support background color from theme*/
+.amplify-accountsettings-changepassword button[type=submit].amplify-button.amplify-field-group__control {
+	background-color: #0f295e;
+	border-color: transparent;
+	color: white;
+
+}
+
+.amplify-accountsettings-changepassword button[type=submit].amplify-button.amplify-field-group__control:hover {
+	background-color: #5781d9;
+	border-color: transparent;
+	color: white;
+
+}
+
+.amplify-accountsettings-changepassword button[type=submit].amplify-button.amplify-field-group__control.amplify-button--disabled {
+	background-color: white;
+	border-color: rgb(239, 240, 240);
+	color: rgb(137, 148, 148);
+}
+
+.amplify-accountsettings-changepassword button[type=submit].amplify-button.amplify-field-group__control.amplify-button--disabled:hover {
+	background-color: white;
+	border-color: rgb(239, 240, 240);
+	color: rgb(137, 148, 148);
+}
+/*Reduce QR Code size and align in center */
+form[data-amplify-authenticator-setup-totp] fieldset.amplify-flex div.amplify-flex img {
+	align-self: center;
+	width: 150px;
+	height: 150px;
+}
+/* Hide QR Code Secret Text Value*/
+form[data-amplify-authenticator-setup-totp] fieldset div[data-amplify-copy]{
+	display: none;
+}
