@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    SAM Template for CPDValet Websites
+
+Parameters:
+    EnvParameter:
+        Type: String
+        Default: dev
+        AllowedValues:
+            - dev
+            - uat
+            - prod
+        Description: Enter dev / uat / prod. Default is dev.
+    HostedDomainPrefix:
+        Description: The suffix for CloudFront domains
+        Type: String
+        Default: cpdvalet.com
+
+    ACMCertificateIdentifier:
+        Description: The AWS Certificate Manager (ACM) certificate identifier.
+        Type: String
+        Default: "1234567890abcdefgh"
+
+Resources:
+    AdminCloudFrontOriginAccessIdentity:
+        Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+        Properties:
+            CloudFrontOriginAccessIdentityConfig:
+                Comment: 'CPDValet Admin App'
+
+    AdminCloudfrontDistribution:
+        Type: "AWS::CloudFront::Distribution"
+        Properties:
+            DistributionConfig:
+                Comment: "Cloudfront distribution for Admin App"
+                DefaultRootObject: "index.html"
+                Enabled: true
+                HttpVersion: http2
+                # List of origins that Cloudfront will connect to
+                Origins:
+                    -   Id: s3-website
+                        DomainName: !GetAtt AdminS3Bucket.DomainName
+                        S3OriginConfig:
+                            # Restricting Bucket access through an origin access identity
+                            OriginAccessIdentity:
+                                Fn::Sub: 'origin-access-identity/cloudfront/${AdminCloudFrontOriginAccessIdentity}'
+                Aliases:
+                    -   Fn::Sub: 'admin.${HostedDomainPrefix}'
+                ViewerCertificate:
+                    ACMCertificateIdentifier: !Sub 'arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${ACMCertificateIdentifier}'
+                    SslSupportMethod: "sni-only"
+                    MinimumProtocolVersion: 'TLSv1.2_2021'
+                # To connect the CDN to the origins you need to specify behaviours
+                DefaultCacheBehavior:
+                    # Compress resources automatically ( gzip )
+                    Compress: 'true'
+                    AllowedMethods:
+                        - GET
+                        - HEAD
+                        - OPTIONS
+                    ForwardedValues:
+                        QueryString: false
+                    TargetOriginId: s3-website
+                    ViewerProtocolPolicy: redirect-to-https
+
+    AdminS3Bucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            BucketName: !Sub "cpdvalet-admin-${EnvParameter}-app"
+
+    AdminS3BucketPolicy:
+        Type: AWS::S3::BucketPolicy
+        Properties:
+            Bucket: !Ref AdminS3Bucket
+            PolicyDocument:
+                # Restricting access to cloudfront only.
+                Statement:
+                    -   Effect: Allow
+                        Action: 's3:GetObject'
+                        Resource:
+                            - !Sub "arn:aws:s3:::${AdminS3Bucket}/*"
+                        Principal:
+                            AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${AdminCloudFrontOriginAccessIdentity}"
+
+    EnterpriseCloudFrontOriginAccessIdentity:
+        Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+        Properties:
+            CloudFrontOriginAccessIdentityConfig:
+                Comment: 'CPDValet Enterprise App'
+
+    EnterpriseCloudfrontDistribution:
+        Type: "AWS::CloudFront::Distribution"
+        Properties:
+            DistributionConfig:
+                Comment: "Cloudfront distribution for Enterprise App"
+                DefaultRootObject: "index.html"
+                Enabled: true
+                HttpVersion: http2
+                # List of origins that Cloudfront will connect to
+                Origins:
+                    -   Id: s3-website
+                        DomainName: !GetAtt EnterpriseS3Bucket.DomainName
+                        S3OriginConfig:
+                            # Restricting Bucket access through an origin access identity
+                            OriginAccessIdentity:
+                                Fn::Sub: 'origin-access-identity/cloudfront/${EnterpriseCloudFrontOriginAccessIdentity}'
+                # To connect the CDN to the origins you need to specify behaviours
+                DefaultCacheBehavior:
+                    # Compress resources automatically ( gzip )
+                    Compress: 'true'
+                    AllowedMethods:
+                        - GET
+                        - HEAD
+                        - OPTIONS
+                    ForwardedValues:
+                        QueryString: false
+                    TargetOriginId: s3-website
+                    ViewerProtocolPolicy: redirect-to-https
+
+    EnterpriseS3Bucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            BucketName: !Sub "cpdvalet-enterprise-${EnvParameter}-app"
+
+    EnterpriseS3BucketPolicy:
+        Type: AWS::S3::BucketPolicy
+        Properties:
+            Bucket: !Ref EnterpriseS3Bucket
+            PolicyDocument:
+                # Restricting access to cloudfront only.
+                Statement:
+                    -   Effect: Allow
+                        Action: 's3:GetObject'
+                        Resource:
+                            - !Sub "arn:aws:s3:::${EnterpriseS3Bucket}/*"
+                        Principal:
+                            AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${EnterpriseCloudFrontOriginAccessIdentity}"
+
+
+    ParticipantCloudFrontOriginAccessIdentity:
+        Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+        Properties:
+            CloudFrontOriginAccessIdentityConfig:
+                Comment: 'CPDValet Participant App'
+
+    ParticipantCloudfrontDistribution:
+        Type: "AWS::CloudFront::Distribution"
+        Properties:
+            DistributionConfig:
+                Comment: "Cloudfront distribution for Participant App"
+                DefaultRootObject: "index.html"
+                Enabled: true
+                HttpVersion: http2
+                # List of origins that Cloudfront will connect to
+                Origins:
+                    -   Id: s3-website
+                        DomainName: !GetAtt ParticipantS3Bucket.DomainName
+                        S3OriginConfig:
+                            # Restricting Bucket access through an origin access identity
+                            OriginAccessIdentity:
+                                Fn::Sub: 'origin-access-identity/cloudfront/${ParticipantCloudFrontOriginAccessIdentity}'
+                # To connect the CDN to the origins you need to specify behaviours
+                DefaultCacheBehavior:
+                    # Compress resources automatically ( gzip )
+                    Compress: 'true'
+                    AllowedMethods:
+                        - GET
+                        - HEAD
+                        - OPTIONS
+                    ForwardedValues:
+                        QueryString: false
+                    TargetOriginId: s3-website
+                    ViewerProtocolPolicy: redirect-to-https
+
+    ParticipantS3Bucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            BucketName: !Sub "cpdvalet-participant-${EnvParameter}-app"
+
+    ParticipantS3BucketPolicy:
+        Type: AWS::S3::BucketPolicy
+        Properties:
+            Bucket: !Ref ParticipantS3Bucket
+            PolicyDocument:
+                # Restricting access to cloudfront only.
+                Statement:
+                    -   Effect: Allow
+                        Action: 's3:GetObject'
+                        Resource:
+                            - !Sub "arn:aws:s3:::${ParticipantS3Bucket}/*"
+                        Principal:
+                            AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${ParticipantCloudFrontOriginAccessIdentity}"
+
